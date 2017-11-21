@@ -15,7 +15,12 @@ import (
 
 var nc NatsConnection
 
+// BotName is the name of the twitter handle to react to
+const BotName = "@sheriff_bot"
+
 func main() {
+	log.Println("Starting Twitter Collector")
+
 	var err error
 	nc, err = nats.Connect("nats://192.168.1.113:4222")
 	if err != nil {
@@ -36,14 +41,18 @@ func main() {
 
 	demux := twitter.NewSwitchDemux()
 	demux.Tweet = func(tweet *twitter.Tweet) {
-		fmt.Println(tweet.Text)
+		handleTweet(tweet)
 	}
+
 	demux.DM = func(dm *twitter.DirectMessage) {
-		fmt.Println(dm.SenderID)
+		fmt.Println("Handle dm:", dm.SenderID)
 	}
-	demux.Event = func(event *twitter.Event) {
-		fmt.Printf("%#v\n", event)
-	}
+
+	/*
+		demux.Event = func(event *twitter.Event) {
+			fmt.Printf("%#v\n", event)
+		}
+	*/
 
 	// User stream
 	userParams := &twitter.StreamUserParams{
@@ -51,6 +60,7 @@ func main() {
 		Language:      []string{"en"},
 	}
 
+	log.Println("Starting twitter stream\n")
 	stream, err := client.Streams.User(userParams)
 	if err != nil {
 		log.Fatal(err)
@@ -64,10 +74,14 @@ func main() {
 	log.Println(<-ch)
 
 	stream.Stop()
+	log.Println("Stopped twitter stream")
 }
 
 func handleTweet(tweet *twitter.Tweet) {
-	if strings.Contains(tweet.Text, "@sheriff_bot") {
+	fmt.Println("Handle tweet:", tweet.Text, tweet.IDStr, tweet.User.Name)
+
+	if strings.Contains(tweet.Text, BotName) {
+		log.Println("dispatch message", tweet.IDStr)
 		sendMessage(tweet.Text)
 	}
 }

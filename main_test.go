@@ -23,8 +23,11 @@ func TestShouldSendMessgaeWhenContainsHandle(t *testing.T) {
 	m := setup(t)
 	is := is.New(t)
 
+	tweetMessage := "Hello there @sheriff_bot"
+
 	tw := &twitter.Tweet{
-		Text: "@sheriff_bot hello",
+		Text: tweetMessage,
+		User: &twitter.User{},
 	}
 
 	handleTweet(tw)
@@ -32,8 +35,8 @@ func TestShouldSendMessgaeWhenContainsHandle(t *testing.T) {
 	is.Equal(len(m.PublishCalls()), 1) // should have a called publish once
 
 	c := m.PublishCalls()[0]
-	is.Equal(c.Subj, "tweet")                      // should have set the message name to tweet
-	is.Equal(c.Data, []byte("@sheriff_bot hello")) // should have passed the message on
+	is.Equal(c.Subj, "tweet")              // should have set the message name to tweet
+	is.Equal(c.Data, []byte(tweetMessage)) // should have passed the message on
 }
 
 func TestShouldNotSendMessgaeWhenNotContainsHandle(t *testing.T) {
@@ -42,6 +45,7 @@ func TestShouldNotSendMessgaeWhenNotContainsHandle(t *testing.T) {
 
 	tw := &twitter.Tweet{
 		Text: "hello",
+		User: &twitter.User{},
 	}
 
 	handleTweet(tw)
